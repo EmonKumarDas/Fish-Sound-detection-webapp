@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fish Species Classifier</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .upload-container {
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px 30px;
+            text-align: center;
+            width: 400px;
+        }
+        .upload-container h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .upload-container p {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .upload-box {
+            border: 2px dashed #0096FF;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: background-color 0.3s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .upload-box:hover {
+            background-color: #e8f4ff;
+        }
+        .upload-box img {
+            width: 50px;
+            margin-bottom: 10px;
+        }
+        .upload-box p {
+            color: #333;
+            font-size: 0.9rem;
+            margin: 0;
+            text-align: center;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        button {
+            background-color: #0096FF;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: block;
+            margin: 0 auto;
+            width: 100px;
+        }
+        button:hover {
+            background-color: #0077cc;
+        }
+        #fileMessage {
+            font-size: 0.9rem;
+            color: #333;
+            margin-top: 15px;
+        }
+        #result {
+            font-size: 1rem;
+            color: #0096FF;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h1>Fish Species Classifier</h1>
+        <p>Upload an audio file to identify the fish species:</p>
+        <label class="upload-box" for="audioFile">
+            <img src="https://img.icons8.com/clouds/100/000000/upload.png" alt="Upload Icon">
+            <p>Drag & drop your file here<br>or click to select a file</p>
+        </label>
+        <input type="file" id="audioFile" accept="audio/*" onchange="showFileName()">
+        <button onclick="uploadAudio()">Submit</button>
+        <p id="fileMessage"></p>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        function showFileName() {
+            const fileInput = document.getElementById("audioFile");
+            const fileMessageElement = document.getElementById("fileMessage");
+            const file = fileInput.files[0];
+
+            if (file) {
+                fileMessageElement.innerText = `File uploaded: ${file.name}`;
+            } else {
+                fileMessageElement.innerText = '';
+            }
+        }
+
+        async function uploadAudio() {
+            const fileInput = document.getElementById("audioFile");
+            const resultElement = document.getElementById("result");
+            const fileMessageElement = document.getElementById("fileMessage");
+            const file = fileInput.files[0];
+
+            if (!file) {
+                resultElement.innerText = "";
+                fileMessageElement.innerText = "Please select an audio file.";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                resultElement.innerText = "Processing...";
+                const response = await fetch("http://127.0.0.1:8000/predict/", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultElement.innerText = `Predicted Fish: ${data.predicted_fish}\nConfidence: ${(data.confidence * 100).toFixed(2)}%`;
+                } else {
+                    resultElement.innerText = `Error: ${data.detail || "An unexpected error occurred."}`;
+                }
+            } catch (error) {
+                resultElement.innerText = `Error: Unable to connect to the server. Please try again later.`;
+                console.error("Error:", error);
+            }
+        }
+    </script>
+</body>
+</html>
